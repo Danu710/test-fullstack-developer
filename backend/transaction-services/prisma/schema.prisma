@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionStatus {
+  BELUM_DIBAYAR
+  SUDAH_DIBAYAR
+}
+
+model Transaction {
+  id           String             @id @default(uuid())
+  kode_billing String             @unique
+  pembeli_id   String
+  total_harga  Decimal
+  status       TransactionStatus
+  expired_at   DateTime
+  created_at   DateTime           @default(now())
+
+  carts        Cart[]
+}
+
+model Cart {
+  id             String   @id @default(uuid())
+  transaksi_id   String
+  produk_id      String
+  harga          Decimal
+
+  transaction    Transaction @relation(fields: [transaksi_id], references: [id])
+}
