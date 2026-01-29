@@ -38,7 +38,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-3'>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       <h3 className='text-lg font-semibold'>
         {product ? 'Edit Produk' : 'Tambah Produk'}
       </h3>
@@ -46,24 +46,27 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       <input
         {...register('name', { required: true })}
         placeholder='Nama Produk'
-        className='border p-2 w-full'
+        className='w-full px-3 py-2 text-sm border rounded-md'
       />
 
       <input
         {...register('harga', { valueAsNumber: true, min: 0 })}
         type='number'
         placeholder='Harga'
-        className='border p-2 w-full'
+        className='w-full px-3 py-2 text-sm border rounded-md'
       />
 
-      <div className='flex justify-end space-x-2'>
-        <button type='button' onClick={onClose}>
+      <div className='flex justify-end gap-3 pt-2'>
+        <button
+          type='button'
+          onClick={onClose}
+          className='px-4 py-2 text-sm border rounded-md'>
           Batal
         </button>
         <button
           type='submit'
-          className='bg-blue-600 text-white px-4 py-1'
-          disabled={mutation.isPending}>
+          disabled={mutation.isPending}
+          className='px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60'>
           Simpan
         </button>
       </div>

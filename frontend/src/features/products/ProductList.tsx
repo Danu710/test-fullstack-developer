@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProductsApi, deleteProductApi } from '../../api/product.api';
 import { addToCartApi } from '../../api/transaction.api';
 import ProductModal from './ProductModal';
+import { useAuthStore } from '../../store/auth.store';
 
 export default function ProductList() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const user = useAuthStore((s) => s.user);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
@@ -26,67 +28,85 @@ export default function ProductList() {
     alert('Produk ditambahkan ke keranjang');
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Gagal memuat data produk</div>;
-
   return (
-    <div>
-      <div className='flex justify-between mb-4'>
+    <div className='space-y-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between'>
         <h2 className='text-xl font-semibold'>Master Produk</h2>
-        <button
-          onClick={() => {
-            setSelectedProduct(null);
-            setOpen(true);
-          }}
-          className='bg-blue-600 text-white px-4 py-2'>
-          Tambah Produk
-        </button>
+        {user?.role === 'ADMIN' && (
+          <button
+            onClick={() => {
+              setSelectedProduct(null);
+              setOpen(true);
+            }}
+            className='px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700'>
+            Tambah Produk
+          </button>
+        )}
       </div>
 
-      <table className='w-full bg-white border'>
-        <thead>
-          <tr className='border-b'>
-            <th>Nama</th>
-            <th>Harga</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.data.map((product: any) => (
-            <tr key={product.id} className='border-b text-center'>
-              <td>{product.name}</td>
-              <td>{product.harga}</td>
-              <td>{product.status ? 'Aktif' : 'Nonaktif'}</td>
-              <td>
-                <button
-                  className='text-blue-600'
-                  onClick={() => {
-                    setSelectedProduct(product);
-                    setOpen(true);
-                  }}>
-                  Edit
-                </button>
+      {isLoading && <div className='text-sm text-gray-500'>Loading...</div>}
+      {error && (
+        <div className='text-sm text-red-500'>Gagal memuat data produk</div>
+      )}
 
-                <button
-                  className='text-red-600 ml-2'
-                  onClick={() => {
-                    if (confirm('Yakin hapus produk?')) {
-                      deleteMutation.mutate(product.id);
-                    }
-                  }}>
-                  Hapus
-                </button>
-                <button
-                  className='bg-blue-600 text-white px-2 py-1 mt-2'
-                  onClick={() => handleAddToCart(product.id)}>
-                  Tambah ke Keranjang
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!isLoading && data?.data?.length === 0 && (
+        <div className='text-sm text-gray-500'>Data produk belum tersedia</div>
+      )}
+
+      {!isLoading && data?.data?.length > 0 && (
+        <div className='overflow-hidden bg-white border rounded-lg'>
+          <table className='w-full text-sm'>
+            <thead className='bg-gray-100'>
+              <tr>
+                <th className='px-4 py-3 text-left'>Nama Produk</th>
+                <th className='px-4 py-3 text-left'>Harga</th>
+                <th className='px-4 py-3 text-center'>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.data.map((product: any) => (
+                <tr key={product.id} className='border-t'>
+                  <td className='px-4 py-3'>{product.name}</td>
+                  <td className='px-4 py-3'>
+                    Rp {product.harga.toLocaleString()}
+                  </td>
+                  <td className='px-4 py-3 text-center'>
+                    <div className='flex justify-center gap-3'>
+                      {user?.role === 'ADMIN' && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setOpen(true);
+                            }}
+                            className='text-blue-600 hover:underline'>
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm('Yakin hapus produk?')) {
+                                deleteMutation.mutate(product.id);
+                              }
+                            }}
+                            className='text-red-600 hover:underline'>
+                            Hapus
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleAddToCart(product.id)}
+                        className='px-3 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700'>
+                        + Keranjang
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {open && (
         <ProductModal

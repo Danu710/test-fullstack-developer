@@ -4,6 +4,7 @@ import { createUserApi, updateUserApi } from '../../api/user.api';
 
 export default function UserForm({ user, onClose }: any) {
   const queryClient = useQueryClient();
+
   const { register, handleSubmit } = useForm({
     defaultValues: user || {
       name: '',
@@ -24,42 +25,61 @@ export default function UserForm({ user, onClose }: any) {
   });
 
   const onSubmit = (data: any) => {
-    if (!data.password) delete data.password;
+    if (user && !data.password) delete data.password;
     mutation.mutate(data);
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-3'>
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
       <h3 className='text-lg font-semibold'>
         {user ? 'Edit User' : 'Tambah User'}
       </h3>
 
-      <input {...register('name')} placeholder='Nama' />
-      <input {...register('email')} placeholder='Email' />
+      <input
+        {...register('name')}
+        placeholder='Nama'
+        className='w-full px-3 py-2 text-sm border rounded-md'
+      />
+
+      <input
+        {...register('email')}
+        placeholder='Email'
+        className='w-full px-3 py-2 text-sm border rounded-md'
+      />
 
       {!user && (
         <input
           {...register('password')}
           type='password'
           placeholder='Password'
+          className='w-full px-3 py-2 text-sm border rounded-md'
         />
       )}
 
-      <select {...register('role')}>
+      <select
+        {...register('role')}
+        className='w-full px-3 py-2 text-sm border rounded-md'>
         <option value='ADMIN'>Admin</option>
         <option value='PEMBELI'>Pembeli</option>
       </select>
 
-      <select {...register('status')}>
-        <option value={true}>Aktif</option>
-        <option value={false}>Nonaktif</option>
+      <select
+        {...register('status')}
+        className='w-full px-3 py-2 text-sm border rounded-md'>
+        <option value='true'>Aktif</option>
+        <option value='false'>Nonaktif</option>
       </select>
 
-      <div className='flex justify-end space-x-2'>
-        <button type='button' onClick={onClose}>
+      <div className='flex justify-end gap-3 pt-2'>
+        <button
+          type='button'
+          onClick={onClose}
+          className='px-4 py-2 text-sm border rounded-md'>
           Batal
         </button>
-        <button type='submit' className='bg-blue-600 text-white px-4'>
+        <button
+          type='submit'
+          className='px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700'>
           Simpan
         </button>
       </div>

@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getAllTransactionsApi,
   payTransactionApi,
 } from '../../api/transaction.api';
+import ErrorModal from '../../components/components/ErrorModal';
 
 export default function AdminTransactionPage() {
   const queryClient = useQueryClient();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { data } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['admin-transactions'],
     queryFn: getAllTransactionsApi,
   });
@@ -16,47 +19,98 @@ export default function AdminTransactionPage() {
     mutationFn: (id: string) => payTransactionApi(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
-      alert('Transaksi berhasil dibayar');
+    },
+    onError: (err: any) => {
+      const message =
+        err?.response?.data?.message || 'Terjadi kesalahan pada transaksi';
+      setErrorMessage(message);
     },
   });
 
-  const transactions = data?.data || [];
+  const transactions = data?.data ?? [];
 
   return (
-    <div>
-      <h1 className='text-xl font-bold mb-4'>Manajemen Transaksi</h1>
+    <div className='space-y-6'>
+      {/* Header */}
+      <div>
+        <h1 className='text-xl font-semibold'>Manajemen Transaksi</h1>
+        <p className='text-sm text-gray-500'>
+          Daftar seluruh transaksi dari pengguna
+        </p>
+      </div>
 
-      {transactions.length === 0 && <p>Tidak ada transaksi</p>}
+      {isLoading && (
+        <div className='text-sm text-gray-500'>Memuat transaksi...</div>
+      )}
 
-      <table className='w-full border'>
-        <thead>
-          <tr className='bg-gray-100'>
-            <th className='border p-2'>Kode Billing</th>
-            <th className='border p-2'>Total</th>
-            <th className='border p-2'>Status</th>
-            <th className='border p-2'>Aksi</th>
-          </tr>
-        </thead>
+      {error && (
+        <div className='text-sm text-red-500'>Gagal memuat data transaksi</div>
+      )}
 
-        <tbody>
-          {transactions.map((trx: any) => (
-            <tr key={trx.id}>
-              <td className='border p-2'>{trx.kode_billing}</td>
-              <td className='border p-2'>Rp {trx.total_harga}</td>
-              <td className='border p-2'>{trx.status}</td>
-              <td className='border p-2'>
-                {trx.status === 'BELUM_DIBAYAR' && (
-                  <button
-                    className='bg-green-600 text-white px-2 py-1'
-                    onClick={() => payMutation.mutate(trx.id)}>
-                    Tandai Lunas
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!isLoading && transactions.length === 0 && (
+        <div className='text-sm text-gray-500'>
+          Tidak ada transaksi tersedia
+        </div>
+      )}
+
+      {!isLoading && transactions.length > 0 && (
+        <div className='overflow-hidden bg-white border rounded-lg'>
+          <table className='w-full text-sm'>
+            <thead className='bg-gray-100'>
+              <tr>
+                <th className='px-4 py-3 text-left'>Kode Billing</th>
+                <th className='px-4 py-3 text-left'>Total</th>
+                <th className='px-4 py-3 text-left'>Status</th>
+                <th className='px-4 py-3 text-center'>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((trx: any) => (
+                <tr key={trx.id} className='border-t'>
+                  <td className='px-4 py-3'>{trx.kode_billing}</td>
+                  <td className='px-4 py-3'>
+                    Rp {trx.total_harga.toLocaleString()}
+                  </td>
+                  <td className='px-4 py-3'>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                        trx.status === 'BELUM_DIBAYAR'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                      {trx.status === 'BELUM_DIBAYAR'
+                        ? 'Belum Dibayar'
+                        : 'Lunas'}
+                    </span>
+                  </td>
+                  <td className='px-4 py-3 text-center'>
+                    {trx.status === 'BELUM_DIBAYAR' ? (
+                      <button
+                        onClick={() => payMutation.mutate(trx.id)}
+                        disabled={payMutation.isPending}
+                        className='px-3 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-60'>
+                        Tandai Lunas
+                      </button>
+                    ) : (
+                      <span className='text-xs text-gray-400'>
+                        Tidak ada aksi
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {errorMessage && (
+        <ErrorModal
+          message={errorMessage}
+          onClose={() => setErrorMessage(null)}
+        />
+      )}
     </div>
   );
 }
